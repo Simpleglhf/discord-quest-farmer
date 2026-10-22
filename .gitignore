@@ -1,14 +1,1 @@
-# Internal development notes (German), not part of the public repository
-BRAIN.md
-PLAN.md
-
-# OS / editor
-.DS_Store
-Thumbs.db
-desktop.ini
-.vscode/
-.idea/
-*.swp
-
-# Claude Code local settings
-.claude/
+empty
