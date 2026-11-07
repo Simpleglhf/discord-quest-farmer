@@ -101,7 +101,8 @@
 	const api = findModuleExport("api", x => typeof x?.get === "function" && typeof x?.post === "function");
 
 	const isApp = typeof DiscordNative !== "undefined";
-	const getQuest = id => QuestsStore.getQuest?.(id) ?? QuestsStore.quests.get(id);
+	const questValues = () => QuestsStore.quests instanceof Map ? [...QuestsStore.quests.values()] : Object.values(QuestsStore.quests ?? {});
+	const getQuest = id => QuestsStore.getQuest?.(id) ?? (QuestsStore.quests instanceof Map ? QuestsStore.quests.get(id) : QuestsStore.quests?.[id]);
 
 	function waitForHeartbeatProgress(quest, taskName, target, signal, report) {
 		return new Promise((resolve, reject) => {
@@ -282,7 +283,7 @@
 
 	function refreshQuests() {
 		const seen = new Set();
-		for (const quest of QuestsStore.quests.values()) {
+		for (const quest of questValues()) {
 			if (new Date(quest.config.expiresAt).getTime() <= Date.now()) continue;
 			const tasks = getTaskConfig(quest)?.tasks ?? {};
 			const taskKeys = Object.keys(tasks);
