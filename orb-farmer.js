@@ -94,7 +94,7 @@
 
 	const ApplicationStreamingStore = findModuleExport("ApplicationStreamingStore", x => typeof x?.getStreamerActiveStreamMetadata === "function");
 	const RunningGameStore = findModuleExport("RunningGameStore", x => typeof x?.getRunningGames === "function");
-	const QuestsStore = findModuleExport("QuestsStore", x => typeof x?.getQuest === "function");
+	const QuestsStore = findModuleExport("QuestsStore", x => typeof x?.getQuest === "function" && (x?.quests instanceof Map || (typeof x?.quests === "object" && x?.quests !== null)));
 	const ChannelStore = findModuleExport("ChannelStore", x => typeof x?.getAllThreadsForParent === "function");
 	const GuildChannelStore = findModuleExport("GuildChannelStore", x => typeof x?.getAllGuilds === "function" && typeof x?.getSFWDefaultChannel === "function");
 	const FluxDispatcher = findModuleExport("FluxDispatcher", x => typeof x?.flushWaitQueue === "function");
@@ -422,7 +422,7 @@
 		clearTimeout(refreshTimer);
 		refreshTimer = setTimeout(refreshQuests, 250);
 	};
-	QuestsStore.addChangeListener?.(onStoreChange);
+	try { QuestsStore.addChangeListener?.(onStoreChange); } catch {}
 
 	const lastLogged = new Map();
 	on(entry => {
@@ -1290,7 +1290,7 @@ a[data-of-nav] { position: relative; }
 		stopAll();
 		destroyUI();
 		clearTimeout(refreshTimer);
-		QuestsStore.removeChangeListener?.(onStoreChange);
+		try { QuestsStore.removeChangeListener?.(onStoreChange); } catch {}
 		listeners.clear();
 		if (window.__orbFarmer === instance) delete window.__orbFarmer;
 		log("Destroyed.");
