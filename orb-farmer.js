@@ -86,7 +86,11 @@
 		for (const mod of Object.values(wpRequire.c)) {
 			if (!mod?.exports) continue;
 			for (const key of Object.keys(mod.exports)) {
-				try { const val = mod.exports[key]; if (val != null && test(val)) return val; } catch {}
+				try {
+					const val = mod.exports[key];
+					if (val == null || typeof val.__OF__ === "function") continue;
+					if (test(val)) return val;
+				} catch {}
 			}
 		}
 		throw new Error(`[${APP_NAME}] Could not find ${name} – Discord probably changed its internals.`);
