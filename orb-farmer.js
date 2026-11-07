@@ -82,19 +82,23 @@
 	const wpRequire = webpackChunkdiscord_app.push([[Symbol()], {}, r => r]);
 	webpackChunkdiscord_app.pop();
 
-	function findModule(name, predicate, key) {
-		const mod = Object.values(wpRequire.c).find(predicate);
-		if (!mod) throw new Error(`[${APP_NAME}] Could not find ${name} – Discord probably changed its internals.`);
-		return mod.exports[key];
+	function findModuleExport(name, test) {
+		for (const mod of Object.values(wpRequire.c)) {
+			if (!mod?.exports) continue;
+			for (const key of Object.keys(mod.exports)) {
+				try { const val = mod.exports[key]; if (val != null && test(val)) return val; } catch {}
+			}
+		}
+		throw new Error(`[${APP_NAME}] Could not find ${name} – Discord probably changed its internals.`);
 	}
 
-	const ApplicationStreamingStore = findModule("ApplicationStreamingStore", x => x?.exports?.A?.__proto__?.getStreamerActiveStreamMetadata, "A");
-	const RunningGameStore = findModule("RunningGameStore", x => x?.exports?.Ay?.getRunningGames, "Ay");
-	const QuestsStore = findModule("QuestsStore", x => x?.exports?.A?.__proto__?.getQuest, "A");
-	const ChannelStore = findModule("ChannelStore", x => x?.exports?.A?.__proto__?.getAllThreadsForParent, "A");
-	const GuildChannelStore = findModule("GuildChannelStore", x => x?.exports?.Ay?.getSFWDefaultChannel, "Ay");
-	const FluxDispatcher = findModule("FluxDispatcher", x => x?.exports?.h?.__proto__?.flushWaitQueue, "h");
-	const api = findModule("api", x => x?.exports?.Bo?.get, "Bo");
+	const ApplicationStreamingStore = findModuleExport("ApplicationStreamingStore", x => typeof x?.getStreamerActiveStreamMetadata === "function");
+	const RunningGameStore = findModuleExport("RunningGameStore", x => typeof x?.getRunningGames === "function");
+	const QuestsStore = findModuleExport("QuestsStore", x => typeof x?.getQuest === "function");
+	const ChannelStore = findModuleExport("ChannelStore", x => typeof x?.getAllThreadsForParent === "function");
+	const GuildChannelStore = findModuleExport("GuildChannelStore", x => typeof x?.getAllGuilds === "function" && typeof x?.getSFWDefaultChannel === "function");
+	const FluxDispatcher = findModuleExport("FluxDispatcher", x => typeof x?.flushWaitQueue === "function");
+	const api = findModuleExport("api", x => typeof x?.get === "function" && typeof x?.post === "function");
 
 	const isApp = typeof DiscordNative !== "undefined";
 	const getQuest = id => QuestsStore.getQuest?.(id) ?? QuestsStore.quests.get(id);
