@@ -332,11 +332,15 @@
 
 	async function runQuest(id, controller) {
 		const entry = entries.get(id);
+		if (!entry) throw new Error("Quest entry not found");
 		const report = patch => { if (!controller.signal.aborted) update(id, patch); };
 		if (!entry.enrolled) await enrollQuest(getQuest(id), entry.taskName, controller.signal, report);
 
 		const quest = getQuest(id);
-		const taskData = getTaskConfig(quest).tasks[entry.taskName];
+		if (!quest) throw new Error("Quest not found in store – press Ctrl+R and paste the script again");
+		const taskConfig = getTaskConfig(quest);
+		if (!taskConfig?.tasks) throw new Error("Quest has no task config – Discord may have changed its internals");
+		const taskData = taskConfig.tasks[entry.taskName];
 		const ctx = {
 			quest,
 			name: entry.name,
@@ -350,9 +354,9 @@
 	async function runInLane(lane, id) {
 		const controller = new AbortController();
 		lanes[lane] = { id, controller };
-		update(id, { status: "running", message: "" });
 
 		try {
+			update(id, { status: "running", message: "" });
 			await runQuest(id, controller);
 			const entry = entries.get(id);
 			update(id, { status: "done", progress: entry?.target ?? 0, message: entry?.claimed ? "" : "Claim the reward in Discord" });
@@ -375,7 +379,7 @@
 			const index = queue.findIndex(id => laneOf(entries.get(id)?.taskName) === lane);
 			if (index === -1) continue;
 			const [id] = queue.splice(index, 1);
-			runInLane(lane, id);
+			runInLane(lane, id).catch(err => console.error(`[${APP_NAME}] Lane ${lane} failed unexpectedly:`, err));
 		}
 	}
 
@@ -392,6 +396,12 @@
 		refreshQuests();
 		let started = 0;
 		for (const id of ids ?? [...entries.keys()]) if (start(id)) started++;
+		setTimeout(() => {
+			if (queue.length > 0 && !lanes.api && !lanes.desktop) {
+				log("Queue stalled – retrying");
+				processQueue();
+			}
+		}, 100);
 		return started;
 	}
 
@@ -1292,6 +1302,7 @@ a[data-of-nav] { position: relative; }
 
 	function destroy() {
 		stopAll();
+		queue.length = 0;
 		destroyUI();
 		clearTimeout(refreshTimer);
 		try { QuestsStore.removeChangeListener?.(onStoreChange); } catch {}
