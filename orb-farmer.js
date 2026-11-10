@@ -102,7 +102,7 @@
 	const ChannelStore = findModuleExport("ChannelStore", x => typeof x?.getAllThreadsForParent === "function");
 	const GuildChannelStore = findModuleExport("GuildChannelStore", x => typeof x?.getAllGuilds === "function" && typeof x?.getSFWDefaultChannel === "function");
 	const FluxDispatcher = findModuleExport("FluxDispatcher", x => typeof x?.flushWaitQueue === "function");
-	const api = findModuleExport("api", x => typeof x?.get === "function" && typeof x?.post === "function");
+	const api = findModuleExport("api", x => typeof x?.get === "function" && typeof x?.post === "function" && typeof x?.del === "function");
 
 	const isApp = typeof DiscordNative !== "undefined";
 	const questValues = () => QuestsStore.quests instanceof Map ? [...QuestsStore.quests.values()] : Object.values(QuestsStore.quests ?? {});
